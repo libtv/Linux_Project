@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
+#include <termios.h>
 
 static char inpbuf[MAXBUF], tokbuf[2*MAXBUF], *ptr, *tok;
 static char special[] = {' ', '\t', '&', ';', '\n', '\0'};
@@ -14,26 +15,79 @@ static int ninredirect;
 static char *pipearg[MAXARG+1]; /* 파이프 라인 사용시 저장할 공간 */
 static FILE *fhistory;
 static FILE *falias;
+static struct termios initial_settings, new_settings;
+static int peek_character = -1;
+char *printHis(int h_count);
 
 userin(char *p) {
-        int c, count;
+        /* **변수 정리 ?: */
+        int c, count, i;
         ptr = inpbuf;
         tok = tokbuf;
-        int i;
-
-        for(i=0; i<MAXARG; i++) {
-                pipearg[i] = NULL;
+        npipe = 0, noutredirect = 0, ninredirect = 0, count = 0;
+        int enter_count = 0;
+        int ch = 0;
+        char enter_char[BUFSIZ];
+        char count_his[BUFSIZ];
+        strcpy(count_his, printHis(1));
+        int history_count = 0;
+        history_count = atoi(count_his);
+        /* **변수 정리  */
+    printf("%s ", p);
+    for(i=0; i<MAXARG; i++) {
+        pipearg[i] = NULL;
+    }
+        for(i=0; i<BUFSIZ; i++) {
+                enter_char[i] = '\0';
         }
-        npipe = 0;
-        noutredirect = 0;
-        ninredirect = 0;
-
-        printf("%s ", p);
-
-        count = 0;
+        for(i=0; i<BUFSIZ; i++) {
+                count_his[i] = '\0';
+        }
+    init_keyboard();
+    while(ch != '\n') {
+                if(kbhit()) {
+        ch = readch();
+                        if (ch == 91) {
+                                ch = readch();
+                                switch(ch) {
+                                        case 65:
+                                                strcpy(count_his, printHis(history_count));
+                                                for(i=0; i < enter_count; i++) {
+                                                        putch(127);
+                                                }
+                                                enter_count = 0;
+                                                for(i=0; count_his[i] != '\n'; i++) {
+                                                        enter_char[enter_count] = putch(count_his[i]);
+                                                        enter_count++;
+                                                }
+                                                history_count--;
+                                                break;
+                                        default:
+                                                enter_char[enter_count] = putch(65);
+                                                enter_count++;
+                                                break;
+                                }
+                        } else if (ch > 31 && ch < 127 || ch == '\n') {
+                                enter_char[enter_count] = putch(ch);
+                                enter_count++;
+                        } else if (ch == 127 || ch == 9) {
+                                if (enter_count > 0) {
+                                        enter_char[--enter_count] = '\0';
+                                        putch(ch);
+                                }
+                        }
+                }
+        }
+        close_keyboard();
 
         while(1) {
-                if ((c = getchar()) == EOF) return(EOF);
+                if ((c = enter_char[count]) == EOF) {
+                        printf("null값 이니까 EOF 처리\n");
+                        return(EOF);
+                }
+                if (strcmp(enter_char, "quit\n") == 0) {
+                        return(EOF);
+                }
                 if (count < MAXBUF) inpbuf[count++] = c;
                 if (c == '\n' && count < MAXBUF) {
                         inpbuf[count] = '\0';
@@ -193,16 +247,34 @@ int where;
         }
 }
 
-printHis(void)
+char *printHis(h_count)
+int h_count;
 {
-        char temp[MAXBUF];
+        static char temp[MAXBUF];
         int count = 0;
         fhistory = fopen("./history.bashrc", "rt");
-        while(fgets(temp, sizeof(temp), fhistory) != NULL) {
-                printf("%d : %s", count++, temp);
-        }
+        if (h_count == 0) {
+                while(fgets(temp, sizeof(temp), fhistory) != NULL) {
+                        printf("%d : %s", count++, temp);
+                }
         fclose(fhistory);
-        return 0;
+                return "yes";
+        } else if (h_count == 1) {
+                while(fgets(temp, sizeof(temp), fhistory) != NULL) {
+                        count++;
+                }
+        fclose(fhistory);
+                static char buff[BUFSIZ];
+                sprintf(buff, "%d", count);
+                return buff;
+        } else {
+        while(fgets(temp, sizeof(temp), fhistory) != NULL) {
+                        count ++;
+                        if (h_count == count) break;
+                }
+                fclose(fhistory);
+                return temp;
+        }
 }
 
 addAlias(alias_temp)
@@ -288,7 +360,7 @@ char **cline;
         int i;
         /* history 명령어 구현 */
         if(strcmp(*cline, "history") == 0) {
-                if (printHis() == 0){
+                if (strcmp(printHis(0), "yes") == 0){
                         return 0;
                 } else {
                         return -1;
@@ -415,9 +487,64 @@ init(void)
         fhistory = fopen("./history.bashrc", "awr");
 }
 
-
 main() {
         while(userin(prompt) != EOF) {
                 procline();
         }
+}
+
+init_keyboard()
+{
+    tcgetattr(0, &initial_settings);
+    new_settings = initial_settings;
+    new_settings.c_lflag &= ~ICANON;
+    new_settings.c_lflag &= ~ECHO;
+    new_settings.c_lflag &= ~ISIG;
+    new_settings.c_cc[VMIN] = 1;
+    new_settings.c_cc[VTIME] = 0;
+    tcsetattr(0, TCSANOW, &new_settings);
+}
+
+close_keyboard()
+{
+    tcsetattr(0, TCSANOW, &initial_settings);
+}
+
+kbhit()
+{
+    char ch;
+    int nread;
+
+    if (peek_character != -1) return -1;
+    new_settings.c_cc[VMIN]=0;
+    tcsetattr(0, TCSANOW, &new_settings);
+    nread = read(0,&ch,1);
+    new_settings.c_cc[VMIN]=1;
+    tcsetattr(0, TCSANOW, &new_settings);
+    if(nread == 1) {
+        peek_character = ch;
+        return 1;
+    }
+    return 0;
+}
+
+readch()
+{
+    char ch;
+    if(peek_character != -1) {
+        ch = peek_character;
+        peek_character = -1;
+        return ch;
+    }
+
+    read(0,&ch,1);
+    return ch;
+}
+
+putch(c)
+int c;
+{
+    putchar(c);
+    fflush(stdout);
+    return c;
 }
