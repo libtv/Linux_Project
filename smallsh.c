@@ -20,14 +20,14 @@ static struct termios initial_settings, new_settings;
 static int peek_character = -1;
 char *printHis(int h_count);
 
-printprompt(char *p) {
+printprompt(char *p) { // prompt 입력
     int i;
     for(i=0; i<strlen(p); i++) {
         putch(p[i]);
     }
 }
 
-init() {
+init() { // 변수 초기화 
     int i;
     for (i = 0; i < MAXARG; i++)
     {
@@ -108,7 +108,6 @@ userin()
     tok = tokbuf;
     npipe = 0, noutredirect = 0, ninredirect = 0, count = 0;
     /* **변수 정리  */
-    //printf("%s ", p);
     init(); // 변수들 초기화
     real_userin();
     while (1)
@@ -130,13 +129,14 @@ userin()
             return (count);
         }
 
-        if (c == '\n')
+        if (c == '\n') // 버그 발생 시 그냥 종료시키자..
         {
             printf(" smallsh : input line too long\n");
             count = 0;
             npipe = 0;
             noutredirect = 0;
             ninredirect = 0;
+            return (EOF);
         }
     }
 }
@@ -215,10 +215,8 @@ procline()
             for (i = 0; i < narg; i++)
             {
                 pipearg[i] = arg[i];
-                printf("%s\n", arg[i]);
                 npipe++;
             }
-            printf("pipe LIne : %s\n 인수 수 : %d\n", *pipearg, narg);
             narg = 0;
             break;
         case OUTREDIRECT:
@@ -490,19 +488,19 @@ char **bcline;
         perror("fork");
         break;
     case 0:
-        printf("값 :: %s\n", *fcline);
-        fd = open(*fcline, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+        fd = open(*bcline, O_RDONLY);
         if (fd == -1)
         {
             perror("open");
             exit(1);
         }
-        if (dup2(fd, 1) == -1)
+        close(0);
+        if (dup2(fd, 0) == -1)
         {
             perror("fd");
         }
         close(fd);
-        execvp(*bcline, bcline);
+        execvp(*fcline, fcline);
         exit(0);
         break;
     default:
@@ -522,7 +520,6 @@ char **bcline;
         perror("fork");
         break;
     case 0:
-        printf("값 :: %s\n", *bcline);
         fd = open(*bcline, O_WRONLY | O_CREAT | O_TRUNC, 0644);
         if (fd == -1)
         {
@@ -535,7 +532,7 @@ char **bcline;
         }
         close(fd);
         execvp(*fcline, fcline);
-        exit(1);
+        exit(0);
         break;
     default:
         wait(NULL);

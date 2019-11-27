@@ -38,7 +38,53 @@ void voiddevkim(char **cline) {
         } else {
             printf("mv Command Error\n");
         }
+    } else if (strcmp(*cline, "cat") == 0 ) {
+        if (voidcat(cline) == 0) {
+        } else {
+            printf("cat Command Error\n");
+        }
     }
+}
+
+voidcat(cline)
+char **cline;
+{
+    char temp[BUFSIZ];
+    static FILE *fp;
+    int count = 0;
+    
+    if (isOptions(cline) == 0) {
+        switch (cline[1][1]) {
+            case 'n':
+                if ((fp = fopen(cline[2], "rt")) == NULL) {
+                    perror("fopen\n");
+                    return -1;
+                }
+                while (fgets(temp, sizeof(temp), fp) != NULL)
+                {
+                    printf("%d : %s", count++, temp);
+                }
+                fclose(fp);
+                return 0;
+                break;
+            default:
+                printf("-- 사용 가능한 옵션 --\n");
+                printf("'-n' : 파일내용 앞에 줄 번호를 표시한다.\n");
+                return 0;
+                break;
+        }
+    } else {
+        if ((fp = fopen(cline[1], "rt")) == NULL) {
+            perror("fopen\n");
+            return -1;
+        }
+        while (fgets(temp, sizeof(temp), fp) != NULL)
+        {
+            printf("%s", temp);
+        }
+        fclose(fp);
+    }
+    return 0;
 }
 
 rm_default(cline, backup)
