@@ -111,6 +111,7 @@ char **cline;
                 printf("'-f' : 지정 위치에 동일 파일이 있을 경우 덮어 쓸때 묻지 않는다.\n");
                 printf("'-i' : 지정 위치에 동일 파일이 있을 경우 덮어 쓸때 묻는다.\n");
                 break;
+        
         }
     } else {
         if (rm_default(cline, 0) == -1) {
