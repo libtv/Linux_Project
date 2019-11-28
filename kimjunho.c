@@ -12,7 +12,6 @@
 void voiddevkim(char **cline) {
     if (strcmp(*cline, "cp") == 0) {
         if (voidcp(cline) == 0) {
-            printf("Copy Success\n");
         } else {
             printf("Copy Failed\n");
         }
