@@ -1,10 +1,13 @@
 #include "smallsh.h"
-#include "kimjunho.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
 #include <termios.h>
+/* 프로젝트 개발 : 팀원 */
+#include "kimjunho.h"
+#include "kimdonghoon.h"
+/* 프로젝트 개발 : 팀원 */
 
 static char inpbuf[MAXBUF], tokbuf[2 * MAXBUF], *ptr, *tok, enter_char[BUFSIZ], count_his[BUFSIZ];
 static char special[] = {' ', '\t', '&', ';', '\n', '\0'};
@@ -464,7 +467,8 @@ develop(cline) char **cline;
     {
         return 0;
     }
-    /* 김준호가 개발한 명령어 */
+
+    /* 프로젝트 팀원 (1) 가 개발한 명령어 */
     for (i = 0; i < DEVELOPKIMCOUNT; i++)
     {
         if (strcmp(DEVELOPKIM[i], *cline) == 0)
@@ -473,6 +477,19 @@ develop(cline) char **cline;
             return 0;
         }
     }
+    /* 프로젝트 팀원 (1) 가 개발한 명령어 */
+
+    /* 프로젝트 팀원 (2) 가 개발한 명령어 */
+    for (i = 0; i < DEVELOPDONGCOUNT; i++)
+    {
+        if (strcmp(DEVELOPDONG[i], *cline) == 0)
+        {
+            voiddevdong(cline);
+            return 0;
+        }
+    }
+    /* 프로젝트 팀원 (2) 가 개발한 명령어 */
+
     return -1;
 }
 
