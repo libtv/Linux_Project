@@ -79,7 +79,6 @@ char** cline;
 voidctime(cline)
 char** cline;
 {
-	
 	time_t t;
 	time(&t);
 	printf("Time(sec) : %d\n", (int)t);
@@ -103,8 +102,6 @@ voidgetuid(cline)
 char** cline;
 
 {
-	
-		
 	uid_t uid, euid;
 	char* name, * cname;	
 	uid = getuid();
@@ -115,5 +112,3 @@ char** cline;
 	return 0;
 	
 }
-
-

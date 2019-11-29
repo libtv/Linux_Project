@@ -81,7 +81,51 @@ char **cline;
     int count = 0;
     unsigned long long pos;
     if (isOptions(cline) == 0) {
-        //options
+        switch (cline[1][1])
+        {
+            case 'n':
+                if ((fp = fopen(cline[3], "rt")) == NULL)
+                {
+                    perror("fopen\n");
+                    return -1;
+                }
+                fseek(fp, 0, SEEK_END);
+                pos = ftell(fp);
+                while(pos) {
+                    if (fseek(fp, --pos, SEEK_SET) == 0) {
+                        if (fgetc(fp) == '\n') { 
+                            if (count++ == atoi(cline[2])) break;
+                        }
+                    } else {
+                        perror("fseek() failed");
+                    }
+                }
+                while(fgets(temp, sizeof(temp), fp) != NULL) {
+                    printf("%s", temp);
+                }
+                fclose(fp);
+                return 0;
+                break;
+            case 'c':
+                if ((fp = fopen(cline[3], "rt")) == NULL)
+                {
+                    perror("fopen\n");
+                    return -1;
+                }
+                fseek(fp, -atoi(cline[2]), SEEK_END);
+                while(fgets(temp, sizeof(temp), fp) != NULL) {
+                    printf("%s", temp);
+                }
+                fclose(fp);
+                return 0;
+                break;
+            default:
+                printf("-- 사용 가능한 옵션 --\n");
+                printf("'-n' : 파일을 라인 수 만큼 읽는다.\n");
+                printf("'-c' : 파일을 바이트 만큼 읽는다.\n");
+                return 0;
+                break;
+        }
     } else {
         if ((fp = fopen(cline[1], "rt")) == NULL)
         {
@@ -100,9 +144,11 @@ char **cline;
             }
         }
         
-        while(fgets(temp, sizeof(temp), fp)) {
+        while(fgets(temp, sizeof(temp), fp) != NULL) {
             printf("%s", temp);
         }
+        fclose(fp);
+        return 0;
     }
     return 0;
 }
