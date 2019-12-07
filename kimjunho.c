@@ -71,6 +71,22 @@ void voiddevkim(char **cline)
             printf("tail Command Error\n");
         }
     }
+    else if (strcmp(*cline, "pwd") == 0)
+    {
+        if (voidpwd(cline) == 0) {
+        } else {
+            printf("pwd Command Error\n");
+        }
+    }
+}
+
+voidpwd(cline)
+char **cline;
+{
+    char buf[BUFSIZ];
+    getcwd(buf, BUFSIZ);
+    printf("%s\n", buf);
+    return 0;
 }
 
 voidtail(cline)

@@ -206,7 +206,7 @@ procline()
     int type;              /* FOREGROUND or BACKGROUND */
     int i;
     for (narg = 0;;)
-    { /* loop FOREVER */
+    {
         switch (toktype = gettok(&arg[narg]))
         {
         case ARG:
