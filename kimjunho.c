@@ -50,13 +50,6 @@ void voiddevkim(char **cline)
             printf("mv Command Error\n");
         }
     }
-    else if (strcmp(*cline, "cat") == 0)
-    {
-        if (voidcat(cline) == 0) {
-        } else {
-            printf("cat Command Error\n");
-        }
-    }
     else if (strcmp(*cline, "head") == 0)
     {
         if (voidhead(cline) == 0) {
@@ -69,13 +62,6 @@ void voiddevkim(char **cline)
         if (voidtail(cline) == 0) {
         } else {
             printf("tail Command Error\n");
-        }
-    }
-    else if (strcmp(*cline, "pwd") == 0)
-    {
-        if (voidpwd(cline) == 0) {
-        } else {
-            printf("pwd Command Error\n");
         }
     }
 }
@@ -290,7 +276,7 @@ voidcat(cline) char **cline;
 rm_default(cline, backup) char **cline;
 int backup;
 {
-    //no options!!
+    //파일을 cp해서 지우는 것
     char *cpline[BUFSIZ];
     char *rmline[BUFSIZ];
     cpline[0] = "cp";
@@ -302,16 +288,16 @@ int backup;
     {
         return -1;
     }
-    if (backup == 1)
+    if (backup == 1) // 백업이면 이거먼저 처리하고
     {
-        char *backupstring = (char *)malloc(strlen(cline[1]) + strlen("_backup") + 1);
+        char *backupstring = (char *)malloc(strlen(cline[1]) + strlen("_backup") + 1); //현재 파일에 _backup을 붙이고
         strcat(backupstring, cline[1]);
         strcat(backupstring, "_backup");
         cpline[1] = cline[1];
         cpline[2] = backupstring;
-        voidcp(cpline);
+        voidcp(cpline); //인자를 이렇게 줘서 복사
     }
-    if (voidrm(rmline) == -1)
+    if (voidrm(rmline) == -1) // 삭제함
     {
         return -1;
     }
@@ -320,24 +306,26 @@ int backup;
 
 voidmv(cline) char **cline;
 {
+    // 옵션이 있으면
     if (isOptions(cline) == 0)
     {
         char *rm_data[BUFSIZ];
         int nResult;
         int yesoryes;
-        rm_data[0] = cline[0];
-        rm_data[1] = cline[2];
-        rm_data[2] = cline[3];
+        // mv -b abc cba 일 경우
+        rm_data[0] = cline[0]; // mv를 저장하고
+        rm_data[1] = cline[2]; // abc를 저장
+        rm_data[2] = cline[3]; // cba를 저장해서
         //options!!
         switch (cline[1][1])
         {
-        case 'b':
+        case 'b': //백업 후 저장
             if (rm_default(rm_data, 1) == -1)
                 return -1;
             return 0;
             break;
-        case 'i':
-            nResult = access(rm_data[2], 0);
+        case 'i': // 파일이 있으면 덮어쓸때 물어보는거 
+            nResult = access(rm_data[2], 0); // 파일이 있으면
             if (nResult == 0)
             {
                 printf("파일이 존재합니다. 덮어 쓰시겠습니까 ? (1 == yes) or (0 == no) >> ");
@@ -357,7 +345,7 @@ voidmv(cline) char **cline;
                 return -1;
             return 0;
             break;
-        case 'f':
+        case 'f': // 걍 삭제후 저장
             if (rm_default(rm_data, 0) == -1)
                 return -1;
             return 0;
@@ -475,8 +463,8 @@ voidrm(cline) char **cline;
             {
                 return -1;
             }
-            flags |= FTW_DEPTH; // post-order traverse
-            if (nftw(cline[2], rmrf, 10, flags) == -1)
+            flags |= FTW_DEPTH; // 하위 디렉토리의 내용을 지우고 처리
+            if (nftw(cline[2], rmrf, 10, flags) == -1) // POSIX 함수
             {
                 perror("nftw");
                 return -1;
@@ -521,11 +509,11 @@ voidchmod(cline) char **cline;
     char *delim = "+-=";
     char *op1, *op2, operation[1];
     int arr[9] = {S_IRUSR, S_IWUSR, S_IXUSR, S_IRGRP,
-                  S_IWGRP, S_IXGRP, S_IROTH, S_IWOTH, S_IXOTH};
+                  S_IWGRP, S_IXGRP, S_IROTH, S_IWOTH, S_IXOTH}; //정보
     int i, j, result;
     switch (cline[1][0])
     {
-    case '0':
+    case '0': // 숫자로 바꾸는 경우
         stat(cline[1], &buf);
         sscanf(cline[1], "0%o", &mode);
         if (chmod(cline[2], mode) == 0)
@@ -537,7 +525,7 @@ voidchmod(cline) char **cline;
             return -1;
         }
         break;
-    default:
+    default: // 문자로 바꾸는 경우
         if (stat(cline[2], &buf) == -1)
         {
             return -1;
@@ -596,11 +584,11 @@ voidchmod(cline) char **cline;
 
 voidcd(cline) char **cline;
 {
-    if (chdir(cline[1]) < 0)
+    if (chdir(cline[1]) < 0) // cd 명령어 호출
     {
         return -1;
     }
-    system("pwd");
+    system("pwd"); //현재위치 출력
     return 0;
 }
 
@@ -609,18 +597,18 @@ voidcp(cline) char **cline;
     FILE *rfp, *wfp;
     char buf[BUFSIZ];
 
-    if ((rfp = fopen(cline[1], "r")) == NULL)
+    if ((rfp = fopen(cline[1], "r")) == NULL) // 읽기
     {
         perror("fopen");
         return -1;
     }
-    if ((wfp = fopen(cline[2], "w")) == NULL)
+    if ((wfp = fopen(cline[2], "w")) == NULL) // 쓰기
     {
         perror("fopen");
         return -1;
     }
 
-    while (fgets(buf, BUFSIZ, rfp) != NULL)
+    while (fgets(buf, BUFSIZ, rfp) != NULL) // 복사
     {
         fputs(buf, wfp);
     }
