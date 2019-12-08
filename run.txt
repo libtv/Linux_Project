@@ -1,0 +1,12 @@
+## 사용법 ##
+gcc -o main smallsh.c kimkangtae.c kimjunho.c kimdonghoon.c
+
+## segment 오류 발생 시 ##
+alias.bashrc 추가
+history.bashrc 추가
+
+## 개발자 ##
+김강태 
+김동훈
+김준호 
+안두안
